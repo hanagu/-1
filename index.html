@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IELTS Vocabulary Flashcards</title>
+    <style>
+        :root {
+            --bg-color: #f4f6f8; /* 눈이 편안한 옅은 회색 배경 */
+            --card-bg: #ffffff;
+            --text-main: #2c3e50;
+            --text-sub: #546e7a;
+            --accent-color: #3498db;
+            --btn-wrong: #e74c3c;
+            --btn-correct: #27ae60;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 600px;
+            text-align: center;
+        }
+
+        /* Progress Bar */
+        .status-bar {
+            margin-bottom: 20px;
+            font-size: 0.9rem;
+            color: var(--text-sub);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        /* Card Styling */
+        .card-container {
+            perspective: 1000px;
+            width: 100%;
+            height: 350px;
+            cursor: pointer;
+            margin-bottom: 30px;
+        }
+
+        .card {
+            width: 100%;
+            height: 100%;
+            position: relative;
+            transform-style: preserve-3d;
+            transition: transform 0.6s cubic-bezier(0.4, 0.2, 0.2, 1);
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+            border-radius: 12px;
+            background-color: var(--card-bg);
+        }
+
+        .card.flipped {
+            transform: rotateY(180deg);
+        }
+
+        .card-face {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 30px;
+            box-sizing: border-box;
+            border-radius: 12px;
+        }
+
+        .card-front {
+            background-color: var(--card-bg);
+        }
+
+        .card-back {
+            background-color: var(--card-bg);
+            transform: rotateY(180deg);
+            text-align: left;
+            align-items: flex-start;
+        }
+
+        /* Typography */
+        .word {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 10px;
+            color: var(--text-main);
+        }
+
+        .ipa {
+            font-size: 1.2rem;
+            color: var(--text-sub);
+            font-family: "Lucida Sans Unicode", "Arial Unicode MS", sans-serif;
+        }
+
+        .meaning {
+            font-size: 1.4rem;
+            font-weight: 600;
+            color: var(--accent-color);
+            margin-bottom: 20px;
+            width: 100%;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 10px;
+        }
+
+        .example-en {
+            font-size: 1.1rem;
+            line-height: 1.5;
+            color: var(--text-main);
+            margin-bottom: 8px;
+            font-style: italic;
+        }
+
+        .example-ko {
+            font-size: 0.95rem;
+            line-height: 1.4;
+            color: var(--text-sub);
+        }
+
+        /* Controls */
+        .controls {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            width: 100%;
+        }
+
+        button {
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+
+        button:active {
+            transform: translateY(2px);
+        }
+
+        .btn-flip {
+            background-color: white;
+            border: 1px solid #ddd;
+            color: var(--text-main);
+            width: 100%;
+        }
+
+        .btn-unknown {
+            background-color: #fff0f0;
+            color: var(--btn-wrong);
+            border: 1px solid #ffcccc;
+            flex: 1;
+        }
+
+        .btn-known {
+            background-color: #f0fff4;
+            color: var(--btn-correct);
+            border: 1px solid #ccffda;
+            flex: 1;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        .message-screen {
+            text-align: center;
+            padding: 40px;
+        }
+
+        .message-title {
+            font-size: 1.8rem;
+            margin-bottom: 20px;
+        }
+
+        .btn-restart {
+            background-color: var(--accent-color);
+            color: white;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <div class="status-bar" id="statusBar">
+            <span id="progressText">1 / 100</span>
+            <span id="sessionInfo">전체 학습 중</span>
+        </div>
+
+        <div class="card-container" id="cardContainer" onclick="flipCard()">
+            <div class="card" id="card">
+                <div class="card-face card-front">
+                    <div class="word" id="wordEn">word</div>
+                    <div class="ipa" id="wordIpa">/ipa/</div>
+                    <div style="margin-top:20px; font-size:0.9rem; color:#999;">(클릭하여 뒤집기)</div>
+                </div>
+                <div class="card-face card-back">
+                    <div class="meaning" id="wordKo">의미</div>
+                    <div class="example-en" id="exEn">Example sentence.</div>
+                    <div class="example-ko" id="exKo">예문 해석.</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="controls" id="controls">
+            <button class="btn-flip" id="btnFlip" onclick="flipCard()">정답 확인</button>
+            
+            <div id="choiceBtns" class="controls hidden" style="width:100%">
+                <button class="btn-unknown" onclick="markUnknown()">다시 학습 (Unknown)</button>
+                <button class="btn-known" onclick="markKnown()">완료 (Known)</button>
+            </div>
+        </div>
+
+        <div class="message-screen hidden" id="completionScreen">
+            <div class="message-title" id="completionTitle">학습 완료!</div>
+            <p id="completionMsg">모든 단어를 학습했습니다.</p>
+            <br>
+            <button class="btn-restart" onclick="restartReview()" id="reviewBtn">틀린 단어만 재학습하기</button>
+            <button class="btn-flip" onclick="location.reload()" style="margin-top:10px;">처음부터 다시 시작 (전체 리셋)</button>
+        </div>
+    </div>
+
+    <script>
+        // Data Set (Duplicates removed, all lowercase keys, Notion corrected)
+        const rawData = [
+            {en: "depict", ipa: "/dɪˈpɪkt/", ko: "묘사하다, 그리다", ex: "The novel vividly depicts the life of early settlers in Australia.", exKo: "그 소설은 호주 초기 정착민들의 삶을 생생하게 묘사한다."},
+            {en: "allegedly", ipa: "/əˈledʒɪdli/", ko: "전해지는 바에 따르면, 주장하는 바에 따르면", ex: "The company was allegedly involved in fraudulent activities.", exKo: "그 회사는 사기 활동에 연루되었다고 전해진다."},
+            {en: "calamity", ipa: "/kəˈlæməti/", ko: "재앙, 재난", ex: "The earthquake was a calamity that devastated the entire region.", exKo: "그 지진은 전 지역을 황폐화시킨 재앙이었다."},
+            {en: "exclusively", ipa: "/ɪkˈskluːsɪvli/", ko: "독점적으로, 오로지", ex: "This offer is available exclusively to our premium members.", exKo: "이 제안은 오로지 우리 프리미엄 회원들에게만 제공된다."},
+            {en: "extensive", ipa: "/ɪkˈstensɪv/", ko: "광범위한, 대규모의", ex: "Extensive research has been conducted to find a cure for the disease.", exKo: "그 질병의 치료법을 찾기 위해 광범위한 연구가 수행되었다."},
+            {en: "uphold", ipa: "/ʌpˈhəʊld/", ko: "유지하다, 옹호하다", ex: "Judges are sworn to uphold the law regardless of personal opinion.", exKo: "판사들은 개인적 견해와 상관없이 법을 수호할 것을 맹세한다."},
+            {en: "taint", ipa: "/teɪnt/", ko: "더럽히다, 오염시키다", ex: "The scandal tainted the politician's reputation permanently.", exKo: "그 스캔들은 그 정치인의 명예를 영구적으로 더럽혔다."},
+            {en: "ultimately", ipa: "/ˈʌltɪmətli/", ko: "궁극적으로, 결국", ex: "Ideally, the changes will ultimately lead to increased productivity.", exKo: "이상적으로는, 그 변화들이 궁극적으로 생산성 증대로 이어질 것이다."},
+            {en: "enact", ipa: "/ɪˈnækt/", ko: "(법을) 제정하다", ex: "The government enacted legislation to protect the environment.", exKo: "정부는 환경을 보호하기 위해 법률을 제정했다."},
+            {en: "jurisdiction", ipa: "/ˌdʒʊərɪsˈdɪkʃn/", ko: "관할권, 사법권", ex: "The case falls outside the jurisdiction of the local court.", exKo: "그 사건은 지방 법원의 관할권 밖에 있다."},
+            {en: "ranch", ipa: "/ræntʃ/", ko: "대목장", ex: "He grew up on a cattle ranch in Texas.", exKo: "그는 텍사스의 소 목장에서 자랐다."},
+            {en: "repository", ipa: "/rɪˈpɒzətri/", ko: "저장소, 보관소", ex: "Libraries are the repository of human knowledge.", exKo: "도서관은 인류 지식의 저장소이다."},
+            {en: "forth", ipa: "/fɔːθ/", ko: "앞으로, 밖으로", ex: "He brought forth a new proposal during the meeting.", exKo: "그는 회의 중에 새로운 제안을 내놓았다."},
+            {en: "reparable", ipa: "/ˈrepərəbl/", ko: "수리할 수 있는, 회복할 수 있는", ex: "Fortunately, the damage to the car was reparable.", exKo: "다행히도 그 차의 손상은 수리할 수 있었다."},
+            {en: "engulf", ipa: "/ɪnˈɡʌlf/", ko: "완전히 에워싸다, 휩싸다", ex: "The flames quickly engulfed the wooden structure.", exKo: "불길이 순식간에 그 목조 건물을 휩싸버렸다."},
+            {en: "dominance", ipa: "/ˈdɒmɪnəns/", ko: "우월, 지배, 우세", ex: "The company has maintained its dominance in the market for decades.", exKo: "그 회사는 수십 년간 시장에서의 우위를 유지해 왔다."},
+            {en: "abide by", ipa: "/əˈbaɪd baɪ/", ko: "준수하다, 따르다", ex: "Competitors must abide by the rules of the tournament.", exKo: "참가자들은 토너먼트의 규칙을 준수해야 한다."},
+            {en: "entity", ipa: "/ˈentəti/", ko: "독립체, 실체", ex: "The two companies will remain separate legal entities.", exKo: "두 회사는 별개의 법적 독립체로 남을 것이다."},
+            {en: "comply with", ipa: "/kəmˈplaɪ wɪð/", ko: "(규칙·요구 등을) 따르다, 준수하다", ex: "All buildings must comply with safety regulations.", exKo: "모든 건물은 안전 규정을 준수해야 한다."},
+            {en: "endorse", ipa: "/ɪnˈdɔːs/", ko: "지지하다, 승인하다", ex: "The committee refused to endorse the candidate's proposal.", exKo: "위원회는 그 후보자의 제안을 지지하기를 거부했다."},
+            {en: "ascertain", ipa: "/ˌæsəˈteɪn/", ko: "알아내다, 확인하다", ex: "Police are trying to ascertain the cause of the accident.", exKo: "경찰은 사고 원인을 알아내기 위해 노력 중이다."},
+            {en: "obscure", ipa: "/əbˈskjʊə(r)/", ko: "모호한, 잘 알려지지 않은; 가리다", ex: "The details of his life remain obscure.", exKo: "그의 삶에 대한 세부 사항들은 여전히 모호하다."},
+            {en: "amorphous", ipa: "/əˈmɔːfəs/", ko: "무정형의, 확실한 형태가 없는", ex: "An amorphous mass of cells was observed under the microscope.", exKo: "현미경 아래에서 무정형의 세포 덩어리가 관찰되었다."},
+            {en: "apprentice", ipa: "/əˈprentɪs/", ko: "견습생, 도제", ex: "He worked as an apprentice to a master carpenter.", exKo: "그는 장인 목수의 견습생으로 일했다."},
+            {en: "reprographic", ipa: "/ˌreprəˈɡræfɪk/", ko: "복사의, 복제의", ex: "The university has a dedicated reprographic centre for printing thesis papers.", exKo: "그 대학에는 논문 인쇄를 위한 전용 복사 센터가 있다."},
+            {en: "commodity", ipa: "/kəˈmɒdəti/", ko: "상품, 원자재", ex: "Oil is a valuable commodity in the global economy.", exKo: "석유는 세계 경제에서 귀중한 원자재이다."},
+            {en: "extent", ipa: "/ɪkˈstent/", ko: "정도, 규모, 범위", ex: "We do not yet know the full extent of the damage.", exKo: "우리는 아직 피해의 전체 규모를 알지 못한다."},
+            {en: "primitive", ipa: "/ˈprɪmətɪv/", ko: "원시의, 초기의", ex: "Primitive tools were found at the excavation site.", exKo: "발굴 현장에서 원시 도구들이 발견되었다."},
+            {en: "traverse", ipa: "/trəˈvɜːs/", ko: "가로지르다, 횡단하다", ex: "The explorers traversed the desert in ten days.", exKo: "탐험가들은 10일 만에 사막을 횡단했다."},
+            {en: "compel", ipa: "/kəmˈpel/", ko: "강요하다, ~하게 만들다", ex: "Illness compelled him to retire early.", exKo: "질병이 그를 조기 은퇴하게 만들었다."},
+            {en: "aristocrat", ipa: "/ˈærɪstəkræt/", ko: "귀족", ex: "She was born into a family of wealthy aristocrats.", exKo: "그녀는 부유한 귀족 집안에서 태어났다."},
+            {en: "advent", ipa: "/ˈædvent/", ko: "도래, 출현", ex: "The advent of the internet changed the way we communicate.", exKo: "인터넷의 도래는 우리가 소통하는 방식을 바꾸었다."},
+            {en: "subsequent", ipa: "/ˈsʌbsɪkwənt/", ko: "그 다음의, 차후의", ex: "Subsequent investigations revealed further corruption.", exKo: "후속 조사들이 더 많은 부패를 밝혀냈다."},
+            {en: "in turn", ipa: "/ɪn tɜːn/", ko: "차례로, 결과적으로", ex: "Stress causes poor sleep, which in turn affects health.", exKo: "스트레스는 수면 부족을 일으키고, 이는 결과적으로 건강에 영향을 미친다."},
+            {en: "profound", ipa: "/prəˈfaʊnd/", ko: "심오한, 깊은", ex: "The book had a profound impact on my thinking.", exKo: "그 책은 내 사고방식에 심오한 영향을 끼쳤다."},
+            {en: "implicit", ipa: "/ɪmˈplɪsɪt/", ko: "암시된, 내포된", ex: "There was an implicit agreement that they would not discuss politics.", exKo: "정치 이야기는 하지 않겠다는 암묵적인 합의가 있었다."},
+            {en: "notion", ipa: "/ˈnəʊʃn/", ko: "개념, 관념, 생각", ex: "He rejected the notion that greed is good.", exKo: "그는 탐욕이 좋다는 관념을 거부했다. (원문 Hotion 수정됨)"},
+            {en: "be deterred from", ipa: "/bi dɪˈtɜːd frəm/", ko: "~하는 것을 단념하다/저지당하다", ex: "Criminals should be deterred from committing crimes by harsh penalties.", exKo: "범죄자들은 엄중한 처벌로 인해 범죄를 저지르는 것을 단념하게 되어야 한다."},
+            {en: "self-reliant", ipa: "/ˌself rɪˈlaɪənt/", ko: "자립적인", ex: "The program aims to help people become more self-reliant.", exKo: "그 프로그램은 사람들이 더 자립적이 되도록 돕는 것을 목표로 한다."},
+            {en: "sheer", ipa: "/ʃɪə(r)/", ko: "순전한, 완전한", ex: "It was done out of sheer desperation.", exKo: "그것은 순전한 절박함 때문에 행해졌다."},
+            {en: "distress", ipa: "/dɪˈstres/", ko: "고통, 괴로움", ex: "The patient showed signs of severe respiratory distress.", exKo: "그 환자는 심각한 호흡 곤란(괴로움)의 징후를 보였다."},
+            {en: "devote", ipa: "/dɪˈvəʊt/", ko: "바치다, 전념하다", ex: "He decided to devote his life to science.", exKo: "그는 과학에 평생을 바치기로 결심했다."},
+            {en: "conserve", ipa: "/kənˈs3ːv/", ko: "아끼다, 보존하다", ex: "We must conserve energy to reduce carbon emissions.", exKo: "우리는 탄소 배출을 줄이기 위해 에너지를 아껴야 한다."},
+            {en: "replication", ipa: "/ˌreplɪˈkeɪʃn/", ko: "복제, 반복", ex: "Exact replication of the experiment yielded different results.", exKo: "그 실험의 정확한 복제(반복)는 다른 결과를 낳았다."},
+            {en: "prescribed", ipa: "/prɪˈskraɪbd/", ko: "규정된, 처방된", ex: "Students must complete the course within the prescribed time.", exKo: "학생들은 규정된 시간 내에 과정을 마쳐야 한다."},
+            {en: "abundance", ipa: "/əˈbʌndəns/", ko: "풍부, 다량", ex: "The region has an abundance of natural resources.", exKo: "그 지역은 천연자원이 풍부하다."},
+            {en: "suppress", ipa: "/səˈpres/", ko: "진압하다, 억누르다", ex: "The government tried to suppress the news.", exKo: "정부는 그 뉴스를 억누르려 했다."},
+            {en: "render", ipa: "/ˈrendə(r)/", ko: "(어떤 상태가 되게) 만들다", ex: "The injury rendered him unable to walk.", exKo: "그 부상은 그를 걷지 못하게 만들었다."},
+            {en: "high-fidelity", ipa: "/ˌhaɪ fɪˈdeləti/", ko: "고충실도의 (소리/이미지가 원본에 가까운)", ex: "The system provides high-fidelity audio reproduction.", exKo: "그 시스템은 고충실도의 오디오 재생을 제공한다."},
+            {en: "in awe of", ipa: "/ɪn ɔː ɒv/", ko: "~에 경외감을 느끼는", ex: "We stood in awe of the magnificent scenery.", exKo: "우리는 그 웅장한 풍경에 경외감을 느끼며 서 있었다."},
+            {en: "emerge", ipa: "/iˈmɜːdʒ/", ko: "나타나다, 드러나다", ex: "New details have emerged regarding the scandal.", exKo: "스캔들에 관해 새로운 세부 사항들이 드러났다."},
+            {en: "metacognition", ipa: "/ˌmetəkɒɡˈnɪʃn/", ko: "메타인지 (자신의 인지 과정에 대한 인지)", ex: "Metacognition helps students understand their own learning strategies.", exKo: "메타인지는 학생들이 자신의 학습 전략을 이해하도록 돕는다."},
+            {en: "succinctly", ipa: "/səkˈsɪŋktli/", ko: "간결하게", ex: "She explained the complex theory succinctly.", exKo: "그녀는 그 복잡한 이론을 간결하게 설명했다."},
+            {en: "conversely", ipa: "/ˈkɒnvɜːsli/", ko: "정반대로, 역으로", ex: "Poor health is accepted as an attribute of old age; conversely, youth is associated with vitality.", exKo: "건강이 나쁜 것은 노년의 특성으로 받아들여진다. 정반대로, 젊음은 활력과 연관된다."},
+            {en: "diminish", ipa: "/dɪˈmɪnɪʃ/", ko: "줄어들다, 약화시키다", ex: "The drug's effectiveness diminishes over time.", exKo: "그 약의 효능은 시간이 지남에 따라 줄어든다."},
+            {en: "deprived", ipa: "/dɪˈpraɪvd/", ko: "궁핍한, 불우한", ex: "Children from deprived backgrounds often struggle in school.", exKo: "불우한 배경의 아이들은 종종 학교생활에 어려움을 겪는다."},
+            {en: "domain", ipa: "/dəˈmeɪn/", ko: "영역, 분야", ex: "Physics used to be solely a male domain.", exKo: "물리학은 한때 오로지 남성의 영역이었다."},
+            {en: "inhibit", ipa: "/ɪnˈhɪbɪt/", ko: "억제하다, 저해하다", ex: "Fear can inhibit people from expressing their opinions.", exKo: "두려움은 사람들이 의견을 표현하는 것을 억제할 수 있다."},
+            {en: "in harness", ipa: "/ɪn ˈhɑːnɪs/", ko: "(~와) 협력하여, 일하는 중인", ex: "We work in harness with our partners to achieve common goals.", exKo: "우리는 공동의 목표를 달성하기 위해 파트너들과 협력하여 일한다."},
+            {en: "enigma", ipa: "/ɪˈnɪɡmə/", ko: "수수께끼", ex: "The origin of the manuscript remains an enigma.", exKo: "그 원고의 기원은 여전히 수수께끼로 남아 있다."},
+            {en: "affluent", ipa: "/ˈæfluənt/", ko: "부유한", ex: "They live in an affluent suburb of the city.", exKo: "그들은 도시의 부유한 교외 지역에 산다."},
+            {en: "prosperous", ipa: "/ˈprɒspərəs/", ko: "번영하는, 부유한", ex: "The country remained prosperous throughout the 19th century.", exKo: "그 나라는 19세기 내내 번영을 누렸다."},
+            {en: "dysentery", ipa: "/ˈdɪsəntri/", ko: "이질 (전염병)", ex: "Poor sanitation often leads to outbreaks of dysentery.", exKo: "열악한 위생은 종종 이질 발병으로 이어진다."},
+            {en: "antiseptic", ipa: "/ˌæntiˈseptɪk/", ko: "소독제, 살균의", ex: "You should apply antiseptic to the wound immediately.", exKo: "즉시 상처에 소독제를 발라야 한다."},
+            {en: "succumb", ipa: "/səˈkʌm/", ko: "굴복하다, 쓰러지다", ex: "He finally succumbed to his illness after a long battle.", exKo: "그는 긴 투병 끝에 마침내 병마에 굴복했다(사망했다)."},
+            {en: "eccentric", ipa: "/ɪkˈsentrɪk/", ko: "괴짜의, 별난", ex: "The professor was known for his eccentric behavior.", exKo: "그 교수는 별난 행동으로 유명했다."},
+            {en: "admiration", ipa: "/ˌædməˈreɪʃn/", ko: "감탄, 존경", ex: "She earned the admiration of her colleagues.", exKo: "그녀는 동료들의 존경을 얻었다."},
+            {en: "alight", ipa: "/əˈlaɪt/", ko: "(탈것에서) 내리다; 불타는", ex: "The passengers alighted from the train.", exKo: "승객들이 기차에서 내렸다."},
+            {en: "static", ipa: "/ˈstætɪk/", ko: "정적인, 고정된", ex: "House prices have remained static for months.", exKo: "집값이 몇 달 동안 고정된 상태였다."},
+            {en: "mortality", ipa: "/mɔːˈtæləti/", ko: "사망, 사망률", ex: "Infant mortality rates have decreased significantly.", exKo: "유아 사망률이 상당히 감소했다."},
+            {en: "halved", ipa: "/hɑːvd/", ko: "반으로 줄어든", ex: "Our profits have halved since last year.", exKo: "우리의 수익은 작년 이후 반으로 줄었다."},
+            {en: "incidence", ipa: "/ˈɪnsɪdəns/", ko: "발생률, 빈도", ex: "There is a high incidence of heart disease in this area.", exKo: "이 지역은 심장병 발생률이 높다."},
+            {en: "prevalence", ipa: "/ˈprevələns/", ko: "널리 퍼짐, 유병률", ex: "The prevalence of obesity is rising globally.", exKo: "비만의 유병률이 전 세계적으로 증가하고 있다."},
+            {en: "clipper", ipa: "/ˈklɪpə(r)/", ko: "쾌속 범선", ex: "Tea was transported from China by clipper ships.", exKo: "차는 쾌속 범선에 의해 중국에서 운송되었다."},
+            {en: "contention", ipa: "/kənˈtenʃn/", ko: "논쟁, 주장", ex: "It is his contention that the law is unfair.", exKo: "그 법이 불공정하다는 것이 그의 주장이다."},
+            {en: "dispute", ipa: "/dɪˈspjuːt/", ko: "분쟁, 논란", ex: "The two countries are involved in a border dispute.", exKo: "두 나라는 국경 분쟁에 휘말려 있다."},
+            {en: "forge", ipa: "/fɔːdʒ/", ko: "구축하다, 위조하다", ex: "They forged a strong alliance against the enemy.", exKo: "그들은 적에 대항하여 강력한 동맹을 구축했다."},
+            {en: "ornate", ipa: "/ɔːˈneɪt/", ko: "화려하게 장식된", ex: "The palace has an ornate ceiling painted with gold.", exKo: "그 궁전에는 금으로 칠해진 화려한 천장이 있다."},
+            {en: "overlook", ipa: "/ˌəʊvəˈlʊk/", ko: "간과하다; 내려다보다", ex: "We cannot overlook the possibility of failure.", exKo: "우리는 실패의 가능성을 간과할 수 없다."},
+            {en: "flock", ipa: "/flɒk/", ko: "떼, 무리; 모이다", ex: "Tourists flocked to the beach in summer.", exKo: "여름에 관광객들이 해변으로 몰려들었다."},
+            {en: "far-flung", ipa: "/ˌfɑː ˈflʌŋ/", ko: "멀리 떨어진, 광범위한", ex: "The empire had colonies in far-flung corners of the world.", exKo: "그 제국은 세계의 멀리 떨어진 구석구석에 식민지를 가지고 있었다."},
+            {en: "pristine", ipa: "/ˈprɪstiːn/", ko: "아주 깨끗한, 자연 그대로의", ex: "The beach remains in pristine condition.", exKo: "그 해변은 아주 깨끗한 상태로 남아 있다."},
+            {en: "aesthetically", ipa: "/iːsˈθetɪkli/", ko: "미적으로", ex: "The design is aesthetically pleasing but not functional.", exKo: "그 디자인은 미적으로는 즐겁지만 기능적이지는 않다."},
+            {en: "intricately", ipa: "/ˈɪntrɪkətli/", ko: "복잡하게", ex: "The wood was intricately carved with floral patterns.", exKo: "그 나무는 꽃무늬로 복잡하게 조각되어 있었다."},
+            {en: "shrine", ipa: "/ʃraɪn/", ko: "성지, 사당", ex: "People visited the shrine to pray.", exKo: "사람들은 기도하기 위해 그 성지를 방문했다."},
+            {en: "recede", ipa: "/rɪˈsiːd/", ko: "물러나다, 희미해지다", ex: "The floodwaters began to recede.", exKo: "홍수가 물러가기 시작했다."},
+            {en: "elaborate", ipa: "/ɪˈlæbərət/", ko: "정교한; 자세히 설명하다", ex: "He made elaborate plans for the escape.", exKo: "그는 탈출을 위해 정교한 계획을 세웠다."},
+            {en: "relentless", ipa: "/rɪˈlentləs/", ko: "끈질긴, 가차 없는", ex: "The relentless heat continued for weeks.", exKo: "끈질긴 더위가 몇 주 동안 계속되었다."},
+            {en: "intricate", ipa: "/ˈɪntrɪkət/", ko: "복잡한", ex: "The watch mechanism is extremely intricate.", exKo: "그 시계 장치는 극도로 복잡하다."},
+            {en: "embellish", ipa: "/ɪmˈbelɪʃ/", ko: "장식하다, (이야기를) 꾸미다", ex: "He tended to embellish the truth to make his stories better.", exKo: "그는 이야기가 더 낫게 들리도록 진실을 꾸미는 경향이 있었다."},
+            {en: "churn", ipa: "/tʃɜːn/", ko: "마구 휘돌다, 휘젓다", ex: "The water churned beneath the boat.", exKo: "물이 보트 아래에서 마구 휘돌았다."},
+            {en: "derelict", ipa: "/ˈderəlɪkt/", ko: "버려진, 유기된", ex: "The derelict warehouse is now being renovated.", exKo: "버려진 창고가 지금 개조되고 있다."},
+            {en: "comprise", ipa: "/kəmˈpraɪz/", ko: "구성하다, 차지하다", ex: "Women comprise 50% of the staff.", exKo: "여성이 직원의 50%를 구성한다."},
+            {en: "descend", ipa: "/dɪˈsend/", ko: "내려가다, 하강하다", ex: "The plane began to descend towards the airport.", exKo: "비행기가 공항을 향해 하강하기 시작했다."},
+            {en: "attributable", ipa: "/əˈtrɪbjətəbl/", ko: "~에 기인하는", ex: "The death was attributable to heart failure.", exKo: "그 죽음은 심부전에 기인한 것이었다."},
+            {en: "ecological", ipa: "/ˌiːkəˈlɒdʒɪkl/", ko: "생태학의, 생태계의", ex: "Oil spills cause an ecological disaster.", exKo: "기름 유출은 생태계의 재앙을 일으킨다."},
+            {en: "culprit", ipa: "/ˈkʌlprɪt/", ko: "범인, 장본인", ex: "Sugar is often the main culprit in tooth decay.", exKo: "설탕은 종종 충치의 주범이다."},
+            {en: "deterioration", ipa: "/dɪˌtɪəriəˈreɪʃn/", ko: "악화, 하락", ex: "There has been a rapid deterioration in relations between the two countries.", exKo: "양국 관계에 급격한 악화가 있었다."},
+            {en: "freight", ipa: "/freɪt/", ko: "화물, 운송", ex: "Railways are still important for moving freight.", exKo: "철도는 여전히 화물 이동에 중요하다."},
+            {en: "curb", ipa: "/kɜːb/", ko: "억제하다, 제한하다", ex: "Measures were introduced to curb inflation.", exKo: "인플레이션을 억제하기 위한 조치들이 도입되었다."}
+        ];
+
+        // --- Logic ---
+        let sessionCards = [];
+        let missedCards = [];
+        let currentIndex = 0;
+        let isFlipped = false;
+        let isReviewMode = false;
+
+        const cardElement = document.getElementById('card');
+        const cardContainer = document.getElementById('cardContainer');
+        const statusBar = document.getElementById('statusBar');
+        const progressText = document.getElementById('progressText');
+        const sessionInfo = document.getElementById('sessionInfo');
+        const btnFlip = document.getElementById('btnFlip');
+        const choiceBtns = document.getElementById('choiceBtns');
+        const completionScreen = document.getElementById('completionScreen');
+        const completionTitle = document.getElementById('completionTitle');
+        const completionMsg = document.getElementById('completionMsg');
+        const reviewBtn = document.getElementById('reviewBtn');
+
+        // Initial Load
+        window.onload = function() {
+            sessionCards = [...rawData]; // Copy all data
+            startSession();
+        };
+
+        function startSession() {
+            currentIndex = 0;
+            missedCards = [];
+            isFlipped = false;
+            
+            // UI Reset
+            cardContainer.classList.remove('hidden');
+            document.getElementById('controls').classList.remove('hidden');
+            completionScreen.classList.add('hidden');
+            resetCardState();
+            
+            updateProgress();
+            loadCard(currentIndex);
+        }
+
+        function loadCard(index) {
+            if (index >= sessionCards.length) {
+                finishSession();
+                return;
+            }
+
+            const data = sessionCards[index];
+            
+            // Front
+            document.getElementById('wordEn').innerText = data.en;
+            document.getElementById('wordIpa').innerText = data.ipa;
+
+            // Back
+            document.getElementById('wordKo').innerText = data.ko;
+            document.getElementById('exEn').innerText = data.ex;
+            document.getElementById('exKo').innerText = data.exKo;
+        }
+
+        function flipCard() {
+            if (isFlipped) return; // Prevent double flip logic on container click if buttons visible
+            
+            cardElement.classList.add('flipped');
+            isFlipped = true;
+            
+            // Show choice buttons, hide flip button
+            btnFlip.classList.add('hidden');
+            choiceBtns.classList.remove('hidden');
+        }
+
+        function resetCardState() {
+            cardElement.classList.remove('flipped');
+            isFlipped = false;
+            btnFlip.classList.remove('hidden');
+            choiceBtns.classList.add('hidden');
+        }
+
+        function markKnown() {
+            nextCard();
+        }
+
+        function markUnknown() {
+            missedCards.push(sessionCards[currentIndex]);
+            nextCard();
+        }
+
+        function nextCard() {
+            // Wait slightly for transition if needed, but instant is snappier
+            currentIndex++;
+            resetCardState();
+            
+            // Slight delay to allow card to flip back visually before content change
+            setTimeout(() => {
+                updateProgress();
+                loadCard(currentIndex);
+            }, 200);
+        }
+
+        function updateProgress() {
+            const currentNum = Math.min(currentIndex + 1, sessionCards.length);
+            progressText.innerText = `${currentNum} / ${sessionCards.length}`;
+            
+            if (isReviewMode) {
+                sessionInfo.innerText = "복습 모드 (틀린 단어)";
+                sessionInfo.style.color = "#e74c3c";
+            } else {
+                sessionInfo.innerText = "전체 학습";
+                sessionInfo.style.color = "#546e7a";
+            }
+        }
+
+        function finishSession() {
+            cardContainer.classList.add('hidden');
+            document.getElementById('controls').classList.add('hidden');
+            completionScreen.classList.remove('hidden');
+
+            if (missedCards.length > 0) {
+                completionTitle.innerText = "라운드 종료!";
+                completionMsg.innerHTML = `총 ${sessionCards.length}개 중 <strong style="color:#e74c3c">${missedCards.length}개</strong>를 더 외워야 합니다.`;
+                reviewBtn.classList.remove('hidden');
+                reviewBtn.innerText = "틀린 단어만 다시 학습하기";
+            } else {
+                completionTitle.innerText = "완벽합니다! 🎉";
+                completionMsg.innerText = "모든 단어를 마스터했습니다.";
+                reviewBtn.classList.add('hidden');
+            }
+        }
+
+        function restartReview() {
+            if (missedCards.length > 0) {
+                sessionCards = [...missedCards]; // Copy missed cards to current session
+                isReviewMode = true;
+                startSession();
+            }
+        }
+    </script>
+</body>
+</html>
